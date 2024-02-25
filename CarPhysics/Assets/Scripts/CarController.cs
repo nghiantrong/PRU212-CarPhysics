@@ -8,6 +8,9 @@ public class CarController : MonoBehaviour
     public float speed = 1500f;
     public float rotationSpeed = 15f;
 
+    public float brakeForce = 500f; // Adjust the braking force as needed
+    public float leanAnimationSpeed = 5f; // Adjust the leaning animation speed
+
     public WheelJoint2D backWheel;
     public WheelJoint2D frontWheel;
 
@@ -23,8 +26,7 @@ public class CarController : MonoBehaviour
     private float initialInertia;
     private void Start()
     {
-        float inertia = rb.inertia;
-        inertiaText.text = "Inertia: " + inertia.ToString("F2");
+        float initialInertia = rb.inertia;
     }
 
     void Update()
@@ -48,6 +50,18 @@ public class CarController : MonoBehaviour
         velocityText.text = "Velocity: " + velocity.ToString("F2");
         frictionText.text = "Friction: " + friction.ToString("F2");
         inertiaText.text = "Dynamic Inertia: " + dynamicInertia.ToString("F2");
+
+        // Check for braking using space key
+        if (Input.GetKey(KeyCode.Space))
+        {
+            // Apply braking force to both wheels
+            rb.AddForce(-rb.velocity.normalized * brakeForce * Time.deltaTime, ForceMode2D.Force);
+        }
+
+        // Adjust motor speed based on the car's velocity to simulate leaning
+        float leanSpeed = Mathf.Clamp(velocity * leanAnimationSpeed, 0f, speed);
+        backWheel.motor = SetMotorSpeed(backWheel.motor, movement + leanSpeed);
+        frontWheel.motor = SetMotorSpeed(frontWheel.motor, movement + leanSpeed);
     }
     void FixedUpdate()
     {
@@ -71,5 +85,13 @@ public class CarController : MonoBehaviour
         }
 
         rb.AddTorque(rotation * rotationSpeed * Time.fixedDeltaTime);
+    }
+
+
+     // Helper method to set motor speed and return the updated JointMotor2D
+    private JointMotor2D SetMotorSpeed(JointMotor2D motor, float speed)
+    {
+        motor.motorSpeed = speed;
+        return motor;
     }
 }
